@@ -39,10 +39,12 @@ with tab1:
     if "df" in st.session_state:
         df = st.session_state["df"]
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         col1.metric("Score moyen", f"{df['total'].mean():.1f}")
         col2.metric("Score médian", f"{df['total'].median():.0f}")
         col3.metric("Score max observé", f"{df['total'].max()}")
+        speed_rate = df["first_to_finish"].mean() * 100 if "first_to_finish" in df.columns else 0
+        col4.metric("Bonus vitesse attribué", f"{speed_rate:.0f}% des joueuses")
 
         col4, col5 = st.columns(2)
         with col4:
@@ -306,8 +308,9 @@ with tab4:
 
         for pc_player in log["phase_c"]["players"]:
             p = pc_player["player"]
+            first_badge = " 🥇 +5pts vitesse" if pc_player["first_to_finish"] else ""
             with st.expander(
-                f"Joueuse {p} — {pc_player['n_visible']} plans visibles",
+                f"Joueuse {p} — {pc_player['n_visible']} plans visibles{first_badge}",
                 expanded=True,
             ):
                 step_rows = []
@@ -356,22 +359,27 @@ with tab4:
         # Score summary table
         summary_rows = []
         for r in log["phase_d"]["players"]:
+            pc = log["phase_c"]["players"][r["player"] - 1]
             summary_rows.append({
                 "Joueuse": f"J{r['player']}",
                 "Points Plans": r["plan_score"]["total"],
                 "Points Intentions": r["intention_score"]["total"],
+                "Bonus Vitesse": r["speed_bonus"],
                 "TOTAL": r["total"],
+                "🥇": "Oui" if pc["first_to_finish"] else "—",
             })
         summary_df = pd.DataFrame(summary_rows)
         st.dataframe(summary_df.style.highlight_max(subset=["TOTAL"], color="#2d6a2d"),
                      use_container_width=True)
 
         for r in log["phase_d"]["players"]:
+            pc = log["phase_c"]["players"][r["player"] - 1]
             with st.expander(f"Joueuse {r['player']} — détail du scoring", expanded=False):
-                col1, col2, col3 = st.columns(3)
+                col1, col2, col3, col4 = st.columns(4)
                 col1.metric("Plans", r["plan_score"]["total"])
                 col2.metric("Intentions", r["intention_score"]["total"])
-                col3.metric("Total", r["total"])
+                col3.metric("Bonus vitesse", r["speed_bonus"])
+                col4.metric("Total", r["total"])
 
                 st.markdown("**Plans :**")
                 banc_rows = []

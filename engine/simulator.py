@@ -291,9 +291,12 @@ def _simulate_phase_b(
                 "card": card_label(card),
             })
 
-        # Check milestone: if step is a milestone, each player picks an intention
+        # Check milestone: if step is a milestone, each player picks an intention.
+        # Order is randomized — it's a speed race, not turn-based.
         if step in MILESTONES:
-            for player_idx in range(n_players):
+            player_order = list(range(n_players))
+            random.shuffle(player_order)
+            for player_idx in player_order:
                 player_num = player_idx + 1
                 chosen, method, itype = _pick_intention(
                     piles, visible, used, player_num, player_intentions[player_num]
@@ -351,10 +354,13 @@ def simulate_game_detailed(
     shared_raw = phase_b["_shared_raw"]
 
     # Phase C — Montage
+    # Simulate placement speed: each card placement takes a random time (uniform).
+    # The player with the lowest total time finishes first and earns +5 pts.
+    SPEED_BONUS = 5
     phase_c_players = []
-    # Phase D — Visionnage
     phase_d_players = []
 
+    player_results = []
     for player_idx in range(n_players):
         hand = player_hands[player_idx]
         personal = player_intentions_raw[player_idx + 1]
@@ -364,22 +370,46 @@ def simulate_game_detailed(
         else:
             banc, placement_log = _random_place(hand)
 
+        # Simulate placement time: random duration per card (greedy = slightly slower)
+        base_time = 1.2 if strategy == "greedy" else 1.0
+        total_time = sum(random.uniform(0.5, base_time) for _ in hand)
+
         plan_score = score_banc(banc)
         intention_score = score_intentions(personal, shared_raw, banc)
-        total = plan_score["total"] + intention_score["total"]
 
-        phase_c_players.append({
+        player_results.append({
+            "player_idx": player_idx,
             "player": player_idx + 1,
+            "banc": banc,
             "placement_log": placement_log,
+            "plan_score": plan_score,
+            "intention_score": intention_score,
+            "total_time": total_time,
             "n_visible": len([p for p in banc.visible_plans if not p.face_down]),
         })
 
+    # Award speed bonus to fastest player
+    fastest = min(player_results, key=lambda r: r["total_time"])
+    for r in player_results:
+        speed_bonus = SPEED_BONUS if r["player"] == fastest["player"] else 0
+        total = r["plan_score"]["total"] + r["intention_score"]["total"] + speed_bonus
+
+        phase_c_players.append({
+            "player": r["player"],
+            "placement_log": r["placement_log"],
+            "n_visible": r["n_visible"],
+            "total_time": round(r["total_time"], 2),
+            "speed_bonus": speed_bonus,
+            "first_to_finish": r["player"] == fastest["player"],
+        })
+
         phase_d_players.append({
-            "player": player_idx + 1,
-            "plan_score": plan_score,
-            "intention_score": intention_score,
+            "player": r["player"],
+            "plan_score": r["plan_score"],
+            "intention_score": r["intention_score"],
+            "speed_bonus": speed_bonus,
             "total": total,
-            "banc": banc,
+            "banc": r["banc"],
         })
 
     return {
@@ -425,6 +455,7 @@ def run_simulation(
     for game_idx in range(n_games):
         log = simulate_game_detailed(n_players=n_players, strategy=strategy)
         for r in log["phase_d"]["players"]:
+            pc = log["phase_c"]["players"][r["player"] - 1]
             records.append({
                 "game": game_idx,
                 "player": r["player"],
@@ -432,7 +463,9 @@ def run_simulation(
                 "total": r["total"],
                 "plan_total": r["plan_score"]["total"],
                 "intention_total": r["intention_score"]["total"],
-                "n_visible_plans": log["phase_c"]["players"][r["player"] - 1]["n_visible"],
+                "speed_bonus": r["speed_bonus"],
+                "first_to_finish": pc["first_to_finish"],
+                "n_visible_plans": pc["n_visible"],
                 "intentions_succeeded": sum(
                     1 for it in r["intention_score"]["intentions"] if it["success"]
                 ),
