@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from collections import defaultdict, Counter
 
-from engine.simulator import run_simulation, simulate_game
+from engine.simulator import run_simulation, simulate_game, simulate_game_detailed
 from engine.loader import load_plan_cards, load_intention_cards
 from engine.scoring import score_banc
 from engine.intentions import score_intentions, evaluate_intention
@@ -198,21 +198,176 @@ with tab3:
 
 # ── TAB 4 : Detailed Game ─────────────────────────────────────────────────────
 with tab4:
-    st.subheader("Inspecter une partie simulée")
-    if st.button("Simuler une partie", key="one_game"):
-        results = simulate_game(n_players=n_players, strategy=strategy)
-        st.session_state["game_results"] = results
+    st.subheader("Inspecter une partie simulée — phase par phase")
 
-    if "game_results" in st.session_state:
-        results = st.session_state["game_results"]
-        for r in results:
-            with st.expander(f"Joueuse {r['player']} — {r['total']} pts", expanded=True):
+    if st.button("Simuler une partie", key="one_game"):
+        st.session_state["game_log"] = simulate_game_detailed(
+            n_players=n_players, strategy=strategy
+        )
+
+    if "game_log" not in st.session_state:
+        st.info("Clique sur 'Simuler une partie' pour inspecter un résultat.")
+    else:
+        log = st.session_state["game_log"]
+        n = log["n_players"]
+
+        # ── PHASE A ──────────────────────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("## 🎞️ Phase A — Dérushage")
+
+        pa = log["phase_a"]
+
+        # Chutier initial seeds
+        st.markdown("**Mise en place — Cartes initiales des Chutiers :**")
+        seed_cols = st.columns(n)
+        for i in range(n):
+            seed_cols[i].markdown(
+                f"**Chutier {i}**\n\n"
+                f"Entre J{i + 1} et J{(i + 1) % n + 1}\n\n"
+                f"`{pa['chutiers'][i]['seed']}`"
+            )
+
+        # Rounds
+        for rnd in pa["rounds"]:
+            with st.expander(f"Tour {rnd['round']}", expanded=rnd["round"] == 1):
+                rows = []
+                for action in rnd["actions"]:
+                    rows.append({
+                        "Joueuse": f"J{action['player']}",
+                        "Cartes tirées": "  /  ".join(action["drawn"]),
+                        f"→ Chutier {action['left_chutier']} (gauche)": action["placed_left"],
+                        f"→ Chutier {action['right_chutier']} (droite)": action["placed_right"],
+                    })
+                st.dataframe(pd.DataFrame(rows), use_container_width=True)
+
+        # Final chutier contents
+        st.markdown("**Contenu final des Chutiers :**")
+        chutier_cols = st.columns(n)
+        for i in range(n):
+            with chutier_cols[i]:
+                st.markdown(f"**Chutier {i}** ({len(pa['chutiers'][i]['cards'])} cartes)")
+                for c in pa["chutiers"][i]["cards"]:
+                    st.markdown(f"- `{c}`")
+
+        # Direction & hands
+        dir_icon = "⬅️" if pa["direction"] == "gauche" else "➡️"
+        st.markdown(f"**Carte direction : {dir_icon} {pa['direction'].upper()}** — "
+                    f"chaque joueuse récupère son chutier de **{pa['direction']}**.")
+
+        st.markdown("**Mains des joueuses après dérushage :**")
+        hand_cols = st.columns(n)
+        for p in range(1, n + 1):
+            with hand_cols[p - 1]:
+                st.markdown(f"**Joueuse {p}** ({len(pa['player_hands'][p])} cartes)")
+                for c in pa["player_hands"][p]:
+                    st.markdown(f"- `{c}`")
+
+        # ── PHASE C ──────────────────────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("## 🎯 Phase C — Choix des Intentions de Montage")
+
+        pc = log["phase_c"]
+
+        with st.expander("Séquence de sélection", expanded=True):
+            sel_rows = []
+            for sel in pc["selection_log"]:
+                sel_rows.append({
+                    "Tour": sel["turn"],
+                    "Joueuse": f"J{sel['player']}",
+                    "Méthode": "Visible" if sel["method"] == "visible" else "Pioche aveugle",
+                    "Intention choisie": sel["chosen"],
+                })
+            if sel_rows:
+                st.dataframe(pd.DataFrame(sel_rows), use_container_width=True)
+
+        st.markdown("**Intentions personnelles :**")
+        intent_cols = st.columns(n)
+        for p in range(1, n + 1):
+            with intent_cols[p - 1]:
+                st.markdown(f"**Joueuse {p}**")
+                for c in pc["player_intentions"][p]:
+                    st.markdown(f"- {c}")
+
+        st.markdown("**Intentions communes (accessibles à toutes) :**")
+        for c in pc["shared_intentions"]:
+            st.markdown(f"- {c}")
+
+        # ── PHASE D ──────────────────────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("## 🎬 Phase D — Montage")
+        st.caption(f"Règle : maximum {10} plans visibles par banc de montage.")
+
+        for pd_player in log["phase_d"]["players"]:
+            p = pd_player["player"]
+            with st.expander(
+                f"Joueuse {p} — {pd_player['n_visible']} plans visibles",
+                expanded=True,
+            ):
+                step_rows = []
+                for step in pd_player["placement_log"]:
+                    step_rows.append({
+                        "Étape": step["step"],
+                        "Carte posée": step["card_label"],
+                        "Plans visibles": "  |  ".join(step["visible_plans"]),
+                        "Total visible": step["n_visible_after"],
+                        "Score cumulé": step["running_score"],
+                    })
+                st.dataframe(pd.DataFrame(step_rows), use_container_width=True)
+
+                # Visual timeline
+                st.markdown("**Timeline finale :**")
+                timeline_html = '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">'
+                pe_player = next(r for r in log["phase_e"]["players"] if r["player"] == p)
+                for entry in pe_player["plan_score"]["per_plan"]:
+                    genre_bg = {
+                        "Action": "#7B1D1D", "Policier": "#1A2744",
+                        "Suspense": "#2E1A47", None: "#222"
+                    }.get(entry["genre"], "#222")
+                    border = "#666" if entry["face_down"] else {
+                        "Action": "#E63946", "Policier": "#457B9D",
+                        "Suspense": "#9B5DE5", None: "#555"
+                    }.get(entry["genre"], "#555")
+                    label = "NOIR" if entry["face_down"] else entry["plan_id"]
+                    pts_text = "" if entry["face_down"] else f"{entry['points']}pts"
+                    content = "" if entry["face_down"] else "<br>".join(entry["content"])
+                    timeline_html += f"""
+                    <div style="
+                        background:{genre_bg};border:1px solid {border};
+                        border-radius:5px;padding:6px 8px;min-width:70px;
+                        font-size:0.7rem;color:#ddd;text-align:center;line-height:1.5
+                    ">
+                        <b>{label}</b><br>{content}<br>
+                        <span style="color:#FFD700;font-weight:bold">{pts_text}</span>
+                    </div>"""
+                timeline_html += "</div>"
+                st.markdown(timeline_html, unsafe_allow_html=True)
+
+        # ── PHASE E ──────────────────────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("## 🏆 Phase E — Visionnage & Scores")
+
+        # Score summary table
+        summary_rows = []
+        for r in log["phase_e"]["players"]:
+            summary_rows.append({
+                "Joueuse": f"J{r['player']}",
+                "Points Plans": r["plan_score"]["total"],
+                "Points Intentions": r["intention_score"]["total"],
+                "TOTAL": r["total"],
+            })
+        summary_df = pd.DataFrame(summary_rows)
+        winner_idx = summary_df["TOTAL"].idxmax()
+        st.dataframe(summary_df.style.highlight_max(subset=["TOTAL"], color="#2d6a2d"),
+                     use_container_width=True)
+
+        for r in log["phase_e"]["players"]:
+            with st.expander(f"Joueuse {r['player']} — détail du scoring", expanded=False):
                 col1, col2, col3 = st.columns(3)
                 col1.metric("Plans", r["plan_score"]["total"])
                 col2.metric("Intentions", r["intention_score"]["total"])
                 col3.metric("Total", r["total"])
 
-                st.markdown("**Banc de Montage :**")
+                st.markdown("**Plans :**")
                 banc_rows = []
                 for entry in r["plan_score"]["per_plan"]:
                     banc_rows.append({
@@ -220,9 +375,9 @@ with tab4:
                         "Cadrage": entry["frame_type"],
                         "Genre": entry["genre"] or "—",
                         "Contenu": ", ".join(entry["content"]),
-                        "Face ↓": "Oui" if entry["face_down"] else "Non",
+                        "Noir": "oui" if entry["face_down"] else "—",
                         "Points": entry["points"],
-                        "Détail": str(entry["breakdown"]),
+                        "Détail": str(entry["breakdown"]) if entry["breakdown"] else "—",
                     })
                 st.dataframe(pd.DataFrame(banc_rows), use_container_width=True)
 
@@ -232,14 +387,12 @@ with tab4:
                     intent_rows.append({
                         "Titre": it["title"],
                         "Type": it["type"],
-                        "Partagée": "Oui" if it["shared"] else "Non",
-                        "Réussie": "✅" if it["success"] else "❌",
+                        "Partagée": "oui" if it["shared"] else "—",
+                        "Résultat": "✅" if it["success"] else "❌",
                         "Points gagnés": it["earned"],
-                        "Valeur": it["points"],
+                        "Valeur max": it["points"],
                     })
                 st.dataframe(pd.DataFrame(intent_rows), use_container_width=True)
-    else:
-        st.info("Clique sur 'Simuler une partie' pour inspecter un résultat.")
 
 # ── TAB 5 : Card Gallery ──────────────────────────────────────────────────────
 with tab5:

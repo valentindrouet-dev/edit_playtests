@@ -1,75 +1,90 @@
 """
 Game simulator for EDIT.
 
-Simplifications vs full rules:
-- Phase A (Dérushage): players draft cards into chutiers randomly.
-- Phase D (Montage): greedy or random placement of all 9 cards.
-- COMBO cards: player chooses orientation and whether to hide one plan.
-- Face-down (Plan Noir) cards: placed randomly with configurable probability.
+Phase A: 4 rounds of drafting into chutiers (2 cards drawn per player per round,
+         1 placed left, 1 placed right). Each chutier starts with 1 Plan Large seed.
+         Direction card at bottom of deck determines which chutier each player keeps.
+Phase C: Each player picks 3 intention cards (1 per type) from visible piles.
+Phase D: Greedy or random placement respecting MAX_VISIBLE_PLANS = 10.
+Phase E: Scoring of plans + intentions.
 """
 from __future__ import annotations
 import random
 import copy
 from typing import Literal
 
-from .models import (
-    PhysicalCard, Plan, PlacedCard, BancDeMontage, IntentionCard
-)
+from .models import PhysicalCard, Plan, PlacedCard, BancDeMontage, IntentionCard
 from .scoring import score_banc
-from .intentions import score_intentions
+from .intentions import score_intentions, evaluate_intention
 from .loader import load_plan_cards, load_intention_cards
 
 
-PLAN_LARGE_COUNT = 12  # cards 1-12 used as chutier seed cards
 DRAW_SIZES = {2: 19, 3: 28, 4: 37}
+MAX_VISIBLE_PLANS = 10
+INTENTION_TYPES = ["THEMATIQUE", "NARRATIVE", "TECHNIQUE"]
 
 
-def _all_plan_large(cards: list[PhysicalCard]) -> list[PhysicalCard]:
-    return [c for c in cards if c.physical_type == "PLAN_LARGE"]
+# ── Card helpers ──────────────────────────────────────────────────────────────
+
+def card_label(card: PhysicalCard) -> str:
+    if card.physical_type == "PLAN_LARGE":
+        p = card.plans[0]
+        return f"#{card.card_id} LARGE [{p.genre or '—'}] {' • '.join(p.content)}"
+    a, b = card.plans[0], card.plans[1]
+    return f"#{card.card_id} {a.frame_type}/{b.frame_type} [{a.genre or '—'}/{b.genre or '—'}]"
 
 
-def _non_plan_large(cards: list[PhysicalCard]) -> list[PhysicalCard]:
-    return [c for c in cards if c.physical_type != "PLAN_LARGE"]
+def plan_label(plan: Plan) -> str:
+    fd = " [NOIR]" if plan.face_down else ""
+    return f"{plan.plan_id} {plan.frame_type}{fd} [{plan.genre or '—'}] {' • '.join(plan.content)}"
 
+
+# ── Placement helpers ─────────────────────────────────────────────────────────
 
 def _make_placement_options(card: PhysicalCard) -> list[list[Plan]]:
-    """Return all possible visible_plans configurations for a physical card."""
     if card.physical_type == "PLAN_LARGE":
         return [list(card.plans)]
-    # COMBO: A+B, B+A, A only (face down B), B only (face down A)
     a, b = card.plans[0], card.plans[1]
-
-    b_down = copy.copy(b)
-    b_down.face_down = True
-    a_down = copy.copy(a)
-    a_down.face_down = True
-
+    b_down = copy.copy(b); b_down.face_down = True
+    a_down = copy.copy(a); a_down.face_down = True
     return [
-        [a, b],           # A left, B right
-        [b, a],           # B left, A right
-        [a, b_down],      # show A, B face down
-        [b, a_down],      # show B, A face down
-        [a_down, b],      # A face down, show B
-        [b_down, a],      # B face down, show A
+        [a, b],
+        [b, a],
+        [a, b_down],
+        [b, a_down],
+        [a_down, b],
+        [b_down, a],
     ]
 
 
-def _greedy_place(hand: list[PhysicalCard], intentions: list[IntentionCard]) -> BancDeMontage:
-    """Place cards one by one, picking the option that maximises current score."""
+def _visible_count(option: list[Plan]) -> int:
+    return sum(1 for p in option if not p.face_down)
+
+
+def _valid_options(card: PhysicalCard, current_visible: int, remaining_count: int) -> list[list[Plan]]:
+    """Filter placement options respecting MAX_VISIBLE_PLANS."""
+    # After placing this card, remaining_count-1 cards still need at least 1 plan each
+    max_for_this = MAX_VISIBLE_PLANS - current_visible - (remaining_count - 1)
+    max_for_this = max(1, max_for_this)  # must show at least 1
+    return [opt for opt in _make_placement_options(card) if 1 <= _visible_count(opt) <= max_for_this]
+
+
+def _greedy_place(hand: list[PhysicalCard]) -> tuple[BancDeMontage, list[dict]]:
+    """Place cards greedily (max score at each step), respecting 10-plan limit."""
     banc = BancDeMontage()
     remaining = list(hand)
+    placement_log = []
 
     while remaining:
-        best_card = None
-        best_option = None
+        current_visible = len([p for p in banc.visible_plans if not p.face_down])
+        random.shuffle(remaining)
+
+        best_card = best_option = None
         best_score = -1
 
-        random.shuffle(remaining)  # shuffle to break ties randomly
         for card in remaining:
-            for option in _make_placement_options(card):
-                trial = BancDeMontage(
-                    placed_cards=banc.placed_cards + [PlacedCard(card, option)]
-                )
+            for option in _valid_options(card, current_visible, len(remaining)):
+                trial = BancDeMontage(placed_cards=banc.placed_cards + [PlacedCard(card, option)])
                 s = score_banc(trial)["total"]
                 if s > best_score:
                     best_score = s
@@ -79,111 +94,283 @@ def _greedy_place(hand: list[PhysicalCard], intentions: list[IntentionCard]) -> 
         banc.placed_cards.append(PlacedCard(best_card, best_option))
         remaining.remove(best_card)
 
-    return banc
+        placement_log.append({
+            "step": len(placement_log) + 1,
+            "card_id": best_card.card_id,
+            "card_label": card_label(best_card),
+            "visible_plans": [plan_label(p) for p in best_option],
+            "n_visible_after": len([p for p in banc.visible_plans if not p.face_down]),
+            "running_score": score_banc(banc)["total"],
+        })
+
+    return banc, placement_log
 
 
-def _random_place(hand: list[PhysicalCard]) -> BancDeMontage:
-    """Place cards in random order with random orientation."""
+def _random_place(hand: list[PhysicalCard]) -> tuple[BancDeMontage, list[dict]]:
     banc = BancDeMontage()
     shuffled = list(hand)
     random.shuffle(shuffled)
+    placement_log = []
 
     for card in shuffled:
-        options = _make_placement_options(card)
+        current_visible = len([p for p in banc.visible_plans if not p.face_down])
+        options = _valid_options(card, current_visible, len(shuffled) - len(placement_log))
         chosen = random.choice(options)
         banc.placed_cards.append(PlacedCard(card, chosen))
 
-    return banc
+        placement_log.append({
+            "step": len(placement_log) + 1,
+            "card_id": card.card_id,
+            "card_label": card_label(card),
+            "visible_plans": [plan_label(p) for p in chosen],
+            "n_visible_after": len([p for p in banc.visible_plans if not p.face_down]),
+            "running_score": score_banc(banc)["total"],
+        })
+
+    return banc, placement_log
 
 
-def simulate_game(
+# ── Phase A ───────────────────────────────────────────────────────────────────
+
+def _simulate_phase_a(all_cards: list[PhysicalCard], n_players: int) -> dict:
+    """
+    Simulate the Dérushage phase.
+
+    Chutier i is between player i and player (i+1)%n:
+      - right chutier of player i   = chutier i
+      - left  chutier of player i   = chutier (i-1)%n
+    """
+    plan_large = [c for c in all_cards if c.physical_type == "PLAN_LARGE"]
+    combo = [c for c in all_cards if c.physical_type == "COMBO"]
+
+    random.shuffle(plan_large)
+    # One Plan Large seeds each chutier
+    chutier_seeds = plan_large[:n_players]
+    chutiers: dict[int, list[PhysicalCard]] = {i: [chutier_seeds[i]] for i in range(n_players)}
+
+    # Remaining cards + combos → draw deck (last card = direction card)
+    remaining = plan_large[n_players:] + combo
+    random.shuffle(remaining)
+    deck = remaining[:DRAW_SIZES[n_players]]          # includes direction card at index -1
+    draw_pool = deck[:-1]                              # cards available to draw
+    direction = random.choice(["gauche", "droite"])   # simulates direction card
+
+    round_logs = []
+    pool_idx = 0
+
+    for round_num in range(4):
+        actions = []
+        # All players act simultaneously; we iterate sequentially for logging
+        for player_idx in range(n_players):
+            c1 = draw_pool[pool_idx];     pool_idx += 1
+            c2 = draw_pool[pool_idx];     pool_idx += 1
+
+            right_chutier = player_idx
+            left_chutier = (player_idx - 1) % n_players
+
+            # Naive strategy: first drawn card left, second right
+            chutiers[left_chutier].append(c1)
+            chutiers[right_chutier].append(c2)
+
+            actions.append({
+                "player": player_idx + 1,
+                "drawn": [card_label(c1), card_label(c2)],
+                "placed_left": card_label(c1),
+                "placed_right": card_label(c2),
+                "left_chutier": left_chutier,
+                "right_chutier": right_chutier,
+            })
+        round_logs.append({"round": round_num + 1, "actions": actions})
+
+    # Each player takes a chutier based on direction
+    player_hands: dict[int, list[PhysicalCard]] = {}
+    for player_idx in range(n_players):
+        taken = (player_idx - 1) % n_players if direction == "gauche" else player_idx
+        player_hands[player_idx] = list(chutiers[taken])
+
+    return {
+        "rounds": round_logs,
+        "chutiers": {
+            i: {
+                "seed": card_label(chutiers[i][0]),
+                "cards": [card_label(c) for c in chutiers[i]],
+            }
+            for i in range(n_players)
+        },
+        "direction": direction,
+        "player_hands": {
+            p + 1: [card_label(c) for c in hand]
+            for p, hand in player_hands.items()
+        },
+        "_hands_raw": player_hands,
+    }
+
+
+# ── Phase C ───────────────────────────────────────────────────────────────────
+
+def _simulate_phase_c(all_intentions: list[IntentionCard], n_players: int) -> dict:
+    """
+    Each player picks 3 intention cards (1 per type) in turn order.
+    Simplification: always takes the first visible card of a random type,
+    simulating the blind-draw-and-choose mechanic.
+    """
+    piles: dict[str, list[IntentionCard]] = {
+        t: [c for c in all_intentions if c.type == t]
+        for t in INTENTION_TYPES
+    }
+    for pile in piles.values():
+        random.shuffle(pile)
+
+    # Visible top card per pile
+    visible: dict[str, IntentionCard | None] = {t: piles[t][0] if piles[t] else None for t in INTENTION_TYPES}
+    used: set[int] = set()
+    selection_log = []
+
+    player_intentions: dict[int, list[IntentionCard]] = {p: [] for p in range(1, n_players + 1)}
+
+    # Players alternate picking 1 card at a time until each has 3
+    turn = 0
+    while any(len(v) < 3 for v in player_intentions.values()):
+        player_num = (turn % n_players) + 1
+        personal = player_intentions[player_num]
+
+        # Find a type this player still needs
+        needed = [t for t in INTENTION_TYPES if not any(c.type == t for c in personal)]
+        if not needed:
+            turn += 1
+            continue
+
+        chosen_type = random.choice(needed)
+
+        # 50% chance: take visible, 50%: blind draw
+        if random.random() < 0.5 and visible[chosen_type] and visible[chosen_type].card_id not in used:
+            chosen = visible[chosen_type]
+            method = "visible"
+        else:
+            candidates = [c for c in piles[chosen_type] if c.card_id not in used]
+            if not candidates:
+                turn += 1
+                continue
+            chosen = random.choice(candidates[:3])   # simulate blind draw of up to 3
+            method = "blind"
+
+        used.add(chosen.card_id)
+        personal.append(chosen)
+
+        # Advance visible for that type
+        remaining_pile = [c for c in piles[chosen_type] if c.card_id not in used]
+        visible[chosen_type] = remaining_pile[0] if remaining_pile else None
+
+        selection_log.append({
+            "turn": turn + 1,
+            "player": player_num,
+            "method": method,
+            "chosen": f"#{chosen.card_id} {chosen.title} ({chosen.type}, {chosen.points}pts)",
+        })
+        turn += 1
+
+    # 3 shared intentions (1 per type, from remaining visible)
+    shared: list[IntentionCard] = []
+    for t in INTENTION_TYPES:
+        remaining_pile = [c for c in piles[t] if c.card_id not in used]
+        if remaining_pile:
+            shared.append(remaining_pile[0])
+            used.add(remaining_pile[0].card_id)
+
+    return {
+        "selection_log": selection_log,
+        "player_intentions": {
+            p: [f"#{c.card_id} {c.title} ({c.points}pts)" for c in cards]
+            for p, cards in player_intentions.items()
+        },
+        "shared_intentions": [f"#{c.card_id} {c.title} ({c.points}pts)" for c in shared],
+        "_player_intentions_raw": player_intentions,
+        "_shared_raw": shared,
+    }
+
+
+# ── Full game ─────────────────────────────────────────────────────────────────
+
+def simulate_game_detailed(
     n_players: int = 2,
     strategy: Literal["random", "greedy"] = "greedy",
     seed: int | None = None,
-) -> list[dict]:
+) -> dict:
     if seed is not None:
         random.seed(seed)
 
     all_cards = load_plan_cards()
     all_intentions = load_intention_cards()
 
-    plan_large = _all_plan_large(all_cards)
-    combo_cards = _non_plan_large(all_cards)
+    phase_a = _simulate_phase_a(all_cards, n_players)
+    phase_c = _simulate_phase_c(all_intentions, n_players)
 
-    # --- Phase A: build chutiers ---
-    # Each player contributes 2 cards per round × 4 rounds = 8 cards
-    # plus the initial Plan Large placed between players = 1 per chutier
-    # Simplification: deal 9 cards randomly per chutier from the main deck
-    deck_size = DRAW_SIZES[n_players]
-    deck = plan_large + combo_cards
-    random.shuffle(deck)
-    draw_deck = deck[:deck_size]
-    random.shuffle(draw_deck)
+    player_hands = phase_a["_hands_raw"]
+    player_intentions_raw = phase_c["_player_intentions_raw"]
+    shared_raw = phase_c["_shared_raw"]
 
-    # Distribute 9 cards per player
-    player_hands = []
-    for i in range(n_players):
-        hand = draw_deck[i * 9: (i + 1) * 9]
-        player_hands.append(hand)
+    phase_d_players = []
+    phase_e_players = []
 
-    # --- Phase C: deal intentions ---
-    intention_piles = {
-        "THEMATIQUE": [c for c in all_intentions if c.type == "THEMATIQUE"],
-        "NARRATIVE": [c for c in all_intentions if c.type == "NARRATIVE"],
-        "TECHNIQUE": [c for c in all_intentions if c.type == "TECHNIQUE"],
-    }
-    for pile in intention_piles.values():
-        random.shuffle(pile)
-
-    player_intentions = []
-    shared_intentions = []
-    used_intention_ids = set()
-
-    for _ in range(n_players):
-        personal = []
-        for pile in intention_piles.values():
-            for card in pile:
-                if card.card_id not in used_intention_ids:
-                    personal.append(card)
-                    used_intention_ids.add(card.card_id)
-                    break
-        player_intentions.append(personal)
-
-    for pile in intention_piles.values():
-        for card in pile:
-            if card.card_id not in used_intention_ids:
-                shared_intentions.append(card)
-                used_intention_ids.add(card.card_id)
-                break
-
-    # --- Phase D+E: montage + scoring ---
-    results = []
-    for i in range(n_players):
-        hand = player_hands[i]
-        personal = player_intentions[i]
+    for player_idx in range(n_players):
+        hand = player_hands[player_idx]
+        personal = player_intentions_raw[player_idx + 1]
 
         if strategy == "greedy":
-            banc = _greedy_place(hand, personal + shared_intentions)
+            banc, placement_log = _greedy_place(hand)
         else:
-            banc = _random_place(hand)
+            banc, placement_log = _random_place(hand)
 
         plan_score = score_banc(banc)
-        intention_score = score_intentions(personal, shared_intentions, banc)
+        intention_score = score_intentions(personal, shared_raw, banc)
         total = plan_score["total"] + intention_score["total"]
 
-        results.append({
-            "player": i + 1,
-            "strategy": strategy,
-            "banc": banc,
+        phase_d_players.append({
+            "player": player_idx + 1,
+            "placement_log": placement_log,
+            "n_visible": len([p for p in banc.visible_plans if not p.face_down]),
+        })
+
+        phase_e_players.append({
+            "player": player_idx + 1,
             "plan_score": plan_score,
             "intention_score": intention_score,
             "total": total,
-            "n_visible_plans": len(banc.visible_plans),
-            "personal_intentions": personal,
-            "shared_intentions": shared_intentions,
+            "banc": banc,
         })
 
-    return results
+    return {
+        "n_players": n_players,
+        "strategy": strategy,
+        "phase_a": phase_a,
+        "phase_c": phase_c,
+        "phase_d": {"players": phase_d_players},
+        "phase_e": {"players": phase_e_players},
+    }
+
+
+# ── Backward-compatible wrappers ──────────────────────────────────────────────
+
+def simulate_game(
+    n_players: int = 2,
+    strategy: Literal["random", "greedy"] = "greedy",
+    seed: int | None = None,
+) -> list[dict]:
+    log = simulate_game_detailed(n_players=n_players, strategy=strategy, seed=seed)
+    return [
+        {
+            "player": r["player"],
+            "strategy": strategy,
+            "banc": r["banc"],
+            "plan_score": r["plan_score"],
+            "intention_score": r["intention_score"],
+            "total": r["total"],
+            "n_visible_plans": r["plan_score"]["total"],
+            "personal_intentions": log["phase_c"]["_player_intentions_raw"][r["player"]],
+            "shared_intentions": log["phase_c"]["_shared_raw"],
+        }
+        for r in log["phase_e"]["players"]
+    ]
 
 
 def run_simulation(
@@ -191,19 +378,18 @@ def run_simulation(
     n_players: int = 2,
     strategy: Literal["random", "greedy"] = "greedy",
 ) -> list[dict]:
-    """Run multiple games and return flat stat records."""
     records = []
     for game_idx in range(n_games):
-        game_results = simulate_game(n_players=n_players, strategy=strategy)
-        for r in game_results:
+        log = simulate_game_detailed(n_players=n_players, strategy=strategy)
+        for r in log["phase_e"]["players"]:
             records.append({
                 "game": game_idx,
                 "player": r["player"],
-                "strategy": r["strategy"],
+                "strategy": strategy,
                 "total": r["total"],
                 "plan_total": r["plan_score"]["total"],
                 "intention_total": r["intention_score"]["total"],
-                "n_visible_plans": r["n_visible_plans"],
+                "n_visible_plans": log["phase_d"]["players"][r["player"] - 1]["n_visible"],
                 "intentions_succeeded": sum(
                     1 for it in r["intention_score"]["intentions"] if it["success"]
                 ),
