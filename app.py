@@ -19,11 +19,12 @@ strategy = st.sidebar.selectbox("Stratégie", ["greedy", "random"], index=0,
                                  help="greedy = maximise le score plan à chaque pose ; random = placement aléatoire")
 n_games = st.sidebar.slider("Nombre de parties simulées", 100, 5000, 1000, step=100)
 
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Distribution des Scores",
     "🃏 Analyse des Cartes Plan",
     "🎯 Analyse des Intentions",
     "🔍 Partie Détaillée",
+    "📋 Liste des Cartes",
 ])
 
 # ── TAB 1 : Score Distribution ────────────────────────────────────────────────
@@ -239,3 +240,150 @@ with tab4:
                 st.dataframe(pd.DataFrame(intent_rows), use_container_width=True)
     else:
         st.info("Clique sur 'Simuler une partie' pour inspecter un résultat.")
+
+# ── TAB 5 : Card Gallery ──────────────────────────────────────────────────────
+with tab5:
+    GENRE_COLORS = {
+        "Action":   {"bg": "#7B1D1D", "badge": "#E63946", "text": "#FFD6D6"},
+        "Policier": {"bg": "#1A2744", "badge": "#457B9D", "text": "#D6E8FF"},
+        "Suspense": {"bg": "#2E1A47", "badge": "#9B5DE5", "text": "#EDD6FF"},
+        None:       {"bg": "#1C1C1C", "badge": "#555555", "text": "#DDDDDD"},
+    }
+    CONTENT_ICONS = {
+        "HEROINE":       ("👩", "Héroïne"),
+        "ENNEMI":        ("💀", "Ennemi"),
+        "ALLIE":         ("🤝", "Allié"),
+        "ARME":          ("🔫", "Arme"),
+        "OBJET":         ("👜", "Objet"),
+        "VOITURE":       ("🚗", "Voiture"),
+        "VIDE":          ("⬛", "Vide"),
+        "PLAN_ACTION":   ("💥", "Plan Action"),
+        "PLAN_SUSPENSE": ("😰", "Plan Suspense"),
+    }
+    FRAME_LABELS = {
+        "PLAN_LARGE": "PLAN LARGE",
+        "PLAN_MOYEN": "PLAN MOYEN",
+        "GROS_PLAN":  "GROS PLAN",
+    }
+
+    def _rule_label(rule) -> str:
+        attr = rule.attribute.replace("_", " ")
+        if rule.type == "GAUCHE":
+            return f"◄ +{rule.points} si {attr}"
+        if rule.type == "DROITE":
+            return f"+{rule.points} si {attr} ►"
+        return f"+{rule.points}/× {attr} (banc)"
+
+    def _plan_html(plan, width_pct: int) -> str:
+        c = GENRE_COLORS[plan.genre]
+        icons = " ".join(
+            f'<span title="{CONTENT_ICONS.get(x, (x, x))[1]}">{CONTENT_ICONS.get(x, ("?", x))[0]}</span>'
+            for x in plan.content
+        )
+        rules_html = "".join(
+            f'<div style="font-size:0.7rem;color:#aaa;line-height:1.4">{_rule_label(r)}</div>'
+            for r in plan.scoring
+        )
+        frame_label = FRAME_LABELS.get(plan.frame_type, plan.frame_type)
+        genre_label = plan.genre or "—"
+        return f"""
+        <div style="
+            width:{width_pct}%;
+            background:{c['bg']};
+            border:1px solid {c['badge']};
+            border-radius:6px;
+            padding:8px;
+            box-sizing:border-box;
+            display:flex;
+            flex-direction:column;
+            gap:4px;
+        ">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="
+                    background:{c['badge']};color:white;
+                    border-radius:4px;padding:1px 6px;
+                    font-size:0.65rem;font-weight:bold;letter-spacing:.05em
+                ">{frame_label}</span>
+                <span style="
+                    background:#333;color:{c['text']};
+                    border-radius:4px;padding:1px 6px;
+                    font-size:0.65rem
+                ">{genre_label}</span>
+            </div>
+            <div style="font-size:1.1rem;letter-spacing:.15em;margin:2px 0">{icons}</div>
+            <div style="font-size:0.7rem;color:#ccc">{' • '.join(plan.content)}</div>
+            <hr style="border-color:#444;margin:4px 0"/>
+            {rules_html}
+        </div>
+        """
+
+    def render_physical_card(card) -> str:
+        card_label = f"#{card.card_id}"
+        if card.physical_type == "PLAN_LARGE":
+            inner = _plan_html(card.plans[0], 100)
+        else:
+            # GROS_PLAN = 1/3, PLAN_MOYEN = 2/3
+            a, b = card.plans[0], card.plans[1]
+            if a.frame_type == "GROS_PLAN":
+                gp, pm = a, b
+                gp_pct, pm_pct = 32, 66
+            else:
+                gp, pm = b, a
+                gp_pct, pm_pct = 32, 66
+            inner = f"""
+            <div style="display:flex;gap:4px;width:100%">
+                {_plan_html(gp, gp_pct)}
+                {_plan_html(pm, pm_pct)}
+            </div>
+            """
+        return f"""
+        <div style="
+            background:#111;
+            border:1px solid #333;
+            border-radius:8px;
+            padding:8px;
+            margin-bottom:12px;
+        ">
+            <div style="
+                font-size:0.7rem;color:#666;margin-bottom:4px;
+                font-family:monospace
+            ">{card_label} — {card.physical_type}</div>
+            {inner}
+        </div>
+        """
+
+    all_cards_gallery = load_plan_cards()
+
+    filter_col1, filter_col2 = st.columns([2, 2])
+    with filter_col1:
+        filter_type = st.selectbox(
+            "Filtrer par type",
+            ["Toutes", "PLAN_LARGE", "COMBO"],
+            key="gallery_type",
+        )
+    with filter_col2:
+        filter_genre = st.selectbox(
+            "Filtrer par genre",
+            ["Tous", "Action", "Policier", "Suspense", "—"],
+            key="gallery_genre",
+        )
+
+    filtered = all_cards_gallery
+    if filter_type != "Toutes":
+        filtered = [c for c in filtered if c.physical_type == filter_type]
+    if filter_genre != "Tous":
+        genre_val = None if filter_genre == "—" else filter_genre
+        filtered = [
+            c for c in filtered
+            if any(p.genre == genre_val for p in c.plans)
+        ]
+
+    st.markdown(f"**{len(filtered)} carte(s) affichée(s)**")
+
+    cols_per_row = 3
+    rows = [filtered[i:i + cols_per_row] for i in range(0, len(filtered), cols_per_row)]
+    for row in rows:
+        cols = st.columns(cols_per_row)
+        for col, card in zip(cols, row):
+            with col:
+                st.markdown(render_physical_card(card), unsafe_allow_html=True)
