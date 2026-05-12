@@ -1,0 +1,292 @@
+[
+  {
+    "card_id": 1,
+    "type": "THEMATIQUE",
+    "title": "Cohérence de Genre",
+    "genre": null,
+    "points": 5,
+    "icon": null,
+    "condition": "max_genres_2",
+    "description": "Votre montage doit contenir 2 genres au maximum."
+  },
+  {
+    "card_id": 2,
+    "type": "TECHNIQUE",
+    "title": "Faux Raccord",
+    "genre": null,
+    "points": 5,
+    "icon": null,
+    "condition": "faux_raccord_1",
+    "description": "1 Plan ne doit avoir aucun personnage, élément ou genre en commun avec le Plan précédent."
+  },
+  {
+    "card_id": 3,
+    "type": "THEMATIQUE",
+    "title": "Incohérence de Genre",
+    "genre": null,
+    "points": 5,
+    "icon": null,
+    "condition": "min_genres_3",
+    "description": "Votre montage doit contenir 3 genres au minimum."
+  },
+  {
+    "card_id": 4,
+    "type": "NARRATIVE",
+    "title": "Affrontement",
+    "genre": null,
+    "points": 5,
+    "icon": null,
+    "condition": "heroine_ennemi_same_plan_2",
+    "description": "Ces personnages doivent apparaître 2 fois dans un même Plan : Héroïne et Méchant."
+  },
+  {
+    "card_id": 5,
+    "type": "NARRATIVE",
+    "title": "Incompatibilité",
+    "genre": null,
+    "points": 5,
+    "icon": null,
+    "condition": "ennemi_allie_never_same_plan",
+    "description": "Ces personnages ne doivent jamais réapparaître dans un même Plan : Méchant et Allié."
+  },
+  {
+    "card_id": 6,
+    "type": "TECHNIQUE",
+    "title": "Cadres Variés",
+    "genre": null,
+    "points": 5,
+    "icon": null,
+    "condition": "no_adjacent_same_frame",
+    "description": "Aucun Plan ne doit être adjacent à un Plan de même valeur."
+  },
+  {
+    "card_id": 7,
+    "type": "NARRATIVE",
+    "title": "Survie de l'Héroïne",
+    "genre": null,
+    "points": 5,
+    "icon": null,
+    "condition": "heroine_survives_last",
+    "description": "Ce personnage doit apparaître et survivre jusqu'à la fin : Héroïne."
+  },
+  {
+    "card_id": 8,
+    "type": "NARRATIVE",
+    "title": "Course Poursuite",
+    "genre": "Action",
+    "points": 5,
+    "icon": "VOITURE",
+    "condition": "3_consecutive_voiture",
+    "description": "3 Plans adjacents doivent contenir : Voiture."
+  },
+  {
+    "card_id": 9,
+    "type": "NARRATIVE",
+    "title": "Échange d'Objets",
+    "genre": "Policier",
+    "points": 5,
+    "icon": "OBJET",
+    "condition": "3_consecutive_objet",
+    "description": "3 Plans adjacents doivent contenir : Objet."
+  },
+  {
+    "card_id": 10,
+    "type": "NARRATIVE",
+    "title": "Mexican Stand-Off",
+    "genre": "Suspense",
+    "points": 5,
+    "icon": "ARME",
+    "condition": "3_consecutive_arme",
+    "description": "3 Plans adjacents doivent contenir : Arme."
+  },
+  {
+    "card_id": 11,
+    "type": "NARRATIVE",
+    "title": "Mort du Méchant",
+    "genre": "Suspense",
+    "points": 5,
+    "icon": "ENNEMI",
+    "condition": "ennemi_appears_2_then_gone",
+    "description": "Ce personnage doit apparaître dans 2 Plans avant de ne plus réapparaître : Méchant."
+  },
+  {
+    "card_id": 12,
+    "type": "TECHNIQUE",
+    "title": "Dézoom",
+    "genre": null,
+    "points": 5,
+    "icon": null,
+    "condition": "dezoom_sequence",
+    "description": "Ces Plans doivent être adjacents 1 fois : GROS PLAN → PLAN MOYEN → PLAN LARGE."
+  },
+  {
+    "card_id": 13,
+    "type": "TECHNIQUE",
+    "title": "Ellipse",
+    "genre": null,
+    "points": 8,
+    "icon": null,
+    "condition": "noir_between_two_plans",
+    "description": "Une Carte Plan Noir doit apparaître au milieu de deux autres Cartes Plan."
+  },
+  {
+    "card_id": 14,
+    "type": "TECHNIQUE",
+    "title": "Raccord",
+    "genre": null,
+    "points": 8,
+    "icon": null,
+    "condition": "all_adjacent_share_element",
+    "description": "Chaque Plan doit avoir un personnage, élément ou genre en commun avec le précédent."
+  },
+  {
+    "card_id": 15,
+    "type": "TECHNIQUE",
+    "title": "Zoom",
+    "genre": null,
+    "points": 5,
+    "icon": null,
+    "condition": "zoom_sequence",
+    "description": "Ces Plans doivent être adjacents 1 fois : PLAN LARGE → PLAN MOYEN → GROS PLAN."
+  },
+  {
+    "card_id": 16,
+    "type": "TECHNIQUE",
+    "title": "Faux Raccord",
+    "genre": null,
+    "points": 8,
+    "icon": null,
+    "condition": "faux_raccord_3",
+    "description": "3 Plans ne doivent avoir aucun personnage, élément ou genre en commun avec le précédent."
+  },
+  {
+    "card_id": 17,
+    "type": "THEMATIQUE",
+    "title": "Aucun Allié",
+    "genre": null,
+    "points": 5,
+    "icon": "ALLIE",
+    "condition": "no_allie",
+    "description": "Votre montage ne doit contenir aucun : Allié."
+  },
+  {
+    "card_id": 18,
+    "type": "TECHNIQUE",
+    "title": "Un Début et Une Fin",
+    "genre": null,
+    "points": 8,
+    "icon": null,
+    "condition": "noir_at_start_and_end",
+    "description": "Une Carte Plan Noir doit apparaître au début et à la toute fin de votre montage."
+  },
+  {
+    "card_id": 19,
+    "type": "THEMATIQUE",
+    "title": "MacGuffin",
+    "genre": null,
+    "points": 3,
+    "icon": "OBJET",
+    "condition": "objet_strict_majority_element",
+    "description": "L'élément strictement majoritaire dans votre montage doit être : Objet."
+  },
+  {
+    "card_id": 20,
+    "type": "NARRATIVE",
+    "title": "Isolement",
+    "genre": null,
+    "points": 8,
+    "icon": "ALLIE",
+    "condition": "allie_isolated",
+    "description": "Ce personnage doit apparaître dans votre montage, mais jamais dans un même Plan qu'un autre : Allié."
+  },
+  {
+    "card_id": 21,
+    "type": "THEMATIQUE",
+    "title": "Fuite Motorisée",
+    "genre": null,
+    "points": 3,
+    "icon": "VOITURE",
+    "condition": "voiture_strict_majority_element",
+    "description": "L'élément strictement majoritaire dans votre montage doit être : Voiture."
+  },
+  {
+    "card_id": 22,
+    "type": "THEMATIQUE",
+    "title": "Héroïne Dominante",
+    "genre": null,
+    "points": 5,
+    "icon": "HEROINE",
+    "condition": "heroine_strict_majority_character",
+    "description": "Le personnage strictement majoritaire dans votre montage doit être : Héroïne."
+  },
+  {
+    "card_id": 23,
+    "type": "THEMATIQUE",
+    "title": "Violence Gratuite",
+    "genre": null,
+    "points": 5,
+    "icon": "ARME",
+    "condition": "no_arme",
+    "description": "Votre montage ne doit contenir aucune : Arme."
+  },
+  {
+    "card_id": 24,
+    "type": "THEMATIQUE",
+    "title": "Suspense Absent",
+    "genre": null,
+    "points": 5,
+    "icon": "SUSPENSE",
+    "condition": "no_suspense_genre",
+    "description": "Votre montage ne doit contenir aucun : Suspense."
+  },
+  {
+    "card_id": 25,
+    "type": "THEMATIQUE",
+    "title": "Aucun Méchant",
+    "genre": null,
+    "points": 8,
+    "icon": "ENNEMI",
+    "condition": "no_ennemi",
+    "description": "Votre montage ne doit contenir aucun : Méchant."
+  },
+  {
+    "card_id": 26,
+    "type": "NARRATIVE",
+    "title": "Alliance",
+    "genre": "Suspense",
+    "points": 5,
+    "icon": "HEROINE+ALLIE",
+    "condition": "heroine_allie_same_plan_2",
+    "description": "Ces personnages doivent apparaître 2 fois dans le même Plan : Héroïne et Allié."
+  },
+  {
+    "card_id": 27,
+    "type": "THEMATIQUE",
+    "title": "Voies Piétonnes",
+    "genre": null,
+    "points": 5,
+    "icon": "VOITURE",
+    "condition": "no_voiture",
+    "description": "Votre montage ne doit contenir aucune : Voiture."
+  },
+  {
+    "card_id": 28,
+    "type": "THEMATIQUE",
+    "title": "Second Amendement",
+    "genre": null,
+    "points": 3,
+    "icon": "ARME",
+    "condition": "arme_strict_majority_element",
+    "description": "L'élément strictement majoritaire dans votre montage doit être : Arme."
+  },
+  {
+    "card_id": 29,
+    "type": "THEMATIQUE",
+    "title": "Le Mal Domine",
+    "genre": null,
+    "points": 5,
+    "icon": "ENNEMI",
+    "condition": "ennemi_strict_majority_character",
+    "description": "Le personnage strictement majoritaire dans votre montage doit être : Méchant."
+  }
+]

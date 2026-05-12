@@ -1,0 +1,756 @@
+[
+  {
+    "card_id": 1,
+    "physical_type": "PLAN_LARGE",
+    "plans": [
+      {
+        "plan_id": "1",
+        "frame_type": "PLAN_LARGE",
+        "genre": "Policier",
+        "content": ["ENNEMI", "ARME", "HEROINE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ENNEMI", "points": 2},
+          {"type": "COUNT_ALL", "attribute": "ARME", "points": 1},
+          {"type": "DROITE", "attribute": "HEROINE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 2,
+    "physical_type": "PLAN_LARGE",
+    "plans": [
+      {
+        "plan_id": "2",
+        "frame_type": "PLAN_LARGE",
+        "genre": "Policier",
+        "content": ["ALLIE", "OBJET", "ENNEMI"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ALLIE", "points": 2},
+          {"type": "COUNT_ALL", "attribute": "OBJET", "points": 1},
+          {"type": "DROITE", "attribute": "ENNEMI", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 3,
+    "physical_type": "PLAN_LARGE",
+    "plans": [
+      {
+        "plan_id": "3",
+        "frame_type": "PLAN_LARGE",
+        "genre": "Policier",
+        "content": ["ALLIE", "VOITURE", "ENNEMI"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ALLIE", "points": 2},
+          {"type": "COUNT_ALL", "attribute": "VOITURE", "points": 1},
+          {"type": "DROITE", "attribute": "ENNEMI", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 4,
+    "physical_type": "PLAN_LARGE",
+    "plans": [
+      {
+        "plan_id": "4",
+        "frame_type": "PLAN_LARGE",
+        "genre": "Suspense",
+        "content": ["HEROINE", "ARME", "ENNEMI"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "HEROINE", "points": 2},
+          {"type": "COUNT_ALL", "attribute": "HEROINE", "points": 1},
+          {"type": "DROITE", "attribute": "ENNEMI", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 5,
+    "physical_type": "PLAN_LARGE",
+    "plans": [
+      {
+        "plan_id": "5",
+        "frame_type": "PLAN_LARGE",
+        "genre": "Suspense",
+        "content": ["ENNEMI", "ARME", "ALLIE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ENNEMI", "points": 2},
+          {"type": "COUNT_ALL", "attribute": "ARME", "points": 1},
+          {"type": "DROITE", "attribute": "ALLIE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 6,
+    "physical_type": "PLAN_LARGE",
+    "plans": [
+      {
+        "plan_id": "6",
+        "frame_type": "PLAN_LARGE",
+        "genre": "Suspense",
+        "content": ["OBJET", "ALLIE", "HEROINE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "OBJET", "points": 2},
+          {"type": "COUNT_ALL", "attribute": "ALLIE", "points": 1},
+          {"type": "DROITE", "attribute": "HEROINE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 7,
+    "physical_type": "PLAN_LARGE",
+    "plans": [
+      {
+        "plan_id": "7",
+        "frame_type": "PLAN_LARGE",
+        "genre": "Action",
+        "content": ["VOITURE", "VOITURE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "VOITURE", "points": 2},
+          {"type": "COUNT_ALL", "attribute": "VOITURE", "points": 1},
+          {"type": "DROITE", "attribute": "VOITURE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 8,
+    "physical_type": "PLAN_LARGE",
+    "plans": [
+      {
+        "plan_id": "8",
+        "frame_type": "PLAN_LARGE",
+        "genre": "Action",
+        "content": ["VOITURE", "ENNEMI", "HEROINE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "VOITURE", "points": 2},
+          {"type": "COUNT_ALL", "attribute": "ENNEMI", "points": 1},
+          {"type": "DROITE", "attribute": "HEROINE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 9,
+    "physical_type": "PLAN_LARGE",
+    "plans": [
+      {
+        "plan_id": "9",
+        "frame_type": "PLAN_LARGE",
+        "genre": "Action",
+        "content": ["HEROINE", "OBJET", "VOITURE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "VOITURE", "points": 2},
+          {"type": "COUNT_ALL", "attribute": "OBJET", "points": 1},
+          {"type": "DROITE", "attribute": "VIDE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 10,
+    "physical_type": "PLAN_LARGE",
+    "plans": [
+      {
+        "plan_id": "10",
+        "frame_type": "PLAN_LARGE",
+        "genre": null,
+        "content": ["ALLIE", "ARME", "OBJET"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "VIDE", "points": 2},
+          {"type": "COUNT_ALL", "attribute": "PLAN_MOYEN", "points": 2},
+          {"type": "DROITE", "attribute": "OBJET", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 11,
+    "physical_type": "PLAN_LARGE",
+    "plans": [
+      {
+        "plan_id": "11",
+        "frame_type": "PLAN_LARGE",
+        "genre": null,
+        "content": ["HEROINE", "ALLIE", "ENNEMI"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ENNEMI", "points": 2},
+          {"type": "COUNT_ALL", "attribute": "PLAN_MOYEN", "points": 2},
+          {"type": "DROITE", "attribute": "VIDE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 12,
+    "physical_type": "PLAN_LARGE",
+    "plans": [
+      {
+        "plan_id": "12",
+        "frame_type": "PLAN_LARGE",
+        "genre": null,
+        "content": ["ALLIE", "HEROINE", "VOITURE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "HEROINE", "points": 2},
+          {"type": "COUNT_ALL", "attribute": "ALLIE", "points": 1},
+          {"type": "DROITE", "attribute": "VIDE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 13,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "13A",
+        "frame_type": "GROS_PLAN",
+        "genre": "Policier",
+        "content": ["HEROINE"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "HEROINE", "points": 1}
+        ]
+      },
+      {
+        "plan_id": "13B",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Policier",
+        "content": ["HEROINE", "ALLIE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "HEROINE", "points": 2},
+          {"type": "DROITE", "attribute": "ALLIE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 14,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "14A",
+        "frame_type": "GROS_PLAN",
+        "genre": "Policier",
+        "content": ["OBJET"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "OBJET", "points": 1}
+        ]
+      },
+      {
+        "plan_id": "14B",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Policier",
+        "content": ["OBJET", "ENNEMI"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "OBJET", "points": 2},
+          {"type": "DROITE", "attribute": "ENNEMI", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 15,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "15A",
+        "frame_type": "GROS_PLAN",
+        "genre": "Action",
+        "content": ["VOITURE"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "PLAN_ACTION", "points": 1}
+        ]
+      },
+      {
+        "plan_id": "15B",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Policier",
+        "content": ["ALLIE", "OBJET"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ALLIE", "points": 2},
+          {"type": "DROITE", "attribute": "OBJET", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 16,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "16A",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Policier",
+        "content": ["ENNEMI", "HEROINE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ENNEMI", "points": 2},
+          {"type": "DROITE", "attribute": "HEROINE", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "16B",
+        "frame_type": "GROS_PLAN",
+        "genre": "Policier",
+        "content": ["HEROINE"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "HEROINE", "points": 1}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 17,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "17A",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Policier",
+        "content": ["ENNEMI", "VOITURE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "VOITURE", "points": 2},
+          {"type": "DROITE", "attribute": "ENNEMI", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "17B",
+        "frame_type": "GROS_PLAN",
+        "genre": "Policier",
+        "content": ["ENNEMI"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "ENNEMI", "points": 1}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 18,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "18A",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Policier",
+        "content": ["HEROINE", "OBJET"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "HEROINE", "points": 2},
+          {"type": "DROITE", "attribute": "OBJET", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "18B",
+        "frame_type": "GROS_PLAN",
+        "genre": "Policier",
+        "content": ["OBJET"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "OBJET", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 19,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "19A",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Action",
+        "content": ["VOITURE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "VOITURE", "points": 2},
+          {"type": "DROITE", "attribute": "VIDE", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "19B",
+        "frame_type": "GROS_PLAN",
+        "genre": "Action",
+        "content": ["VOITURE"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "VOITURE", "points": 1}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 20,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "20A",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Action",
+        "content": ["VOITURE", "ALLIE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "VOITURE", "points": 2},
+          {"type": "DROITE", "attribute": "ALLIE", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "20B",
+        "frame_type": "GROS_PLAN",
+        "genre": "Action",
+        "content": ["ALLIE"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "ALLIE", "points": 1}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 21,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "21A",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Action",
+        "content": ["OBJET", "VOITURE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "OBJET", "points": 2},
+          {"type": "DROITE", "attribute": "VOITURE", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "21B",
+        "frame_type": "GROS_PLAN",
+        "genre": "Action",
+        "content": ["PLAN_ACTION"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "PLAN_ACTION", "points": 1}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 22,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "22A",
+        "frame_type": "GROS_PLAN",
+        "genre": "Action",
+        "content": ["ARME"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "GROS_PLAN", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "22B",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Action",
+        "content": ["VOITURE", "HEROINE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "VOITURE", "points": 2},
+          {"type": "DROITE", "attribute": "HEROINE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 23,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "23A",
+        "frame_type": "GROS_PLAN",
+        "genre": "Action",
+        "content": ["ENNEMI"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "ENNEMI", "points": 1}
+        ]
+      },
+      {
+        "plan_id": "23B",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Action",
+        "content": ["ENNEMI", "VOITURE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ENNEMI", "points": 2},
+          {"type": "DROITE", "attribute": "VOITURE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 24,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "24A",
+        "frame_type": "GROS_PLAN",
+        "genre": "Action",
+        "content": ["PLAN_ACTION"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "PLAN_ACTION", "points": 1}
+        ]
+      },
+      {
+        "plan_id": "24B",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Action",
+        "content": ["VOITURE", "HEROINE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "VOITURE", "points": 2},
+          {"type": "DROITE", "attribute": "HEROINE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 25,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "25A",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Suspense",
+        "content": ["ARME"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ARME", "points": 2},
+          {"type": "DROITE", "attribute": "ARME", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "25B",
+        "frame_type": "GROS_PLAN",
+        "genre": "Suspense",
+        "content": ["ARME"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "ARME", "points": 1}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 26,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "26A",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Suspense",
+        "content": ["ALLIE", "ARME"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ALLIE", "points": 2},
+          {"type": "DROITE", "attribute": "ARME", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "26B",
+        "frame_type": "GROS_PLAN",
+        "genre": "Suspense",
+        "content": ["PLAN_SUSPENSE"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "PLAN_SUSPENSE", "points": 1}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 27,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "27A",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Suspense",
+        "content": ["ENNEMI", "ARME"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ENNEMI", "points": 2},
+          {"type": "DROITE", "attribute": "ARME", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "27B",
+        "frame_type": "GROS_PLAN",
+        "genre": "Suspense",
+        "content": ["ARME"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "ARME", "points": 1}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 28,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "28A",
+        "frame_type": "GROS_PLAN",
+        "genre": "Suspense",
+        "content": ["ARME"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "GROS_PLAN", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "28B",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Suspense",
+        "content": ["ARME", "ENNEMI"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ARME", "points": 2},
+          {"type": "DROITE", "attribute": "ENNEMI", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 29,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "29A",
+        "frame_type": "GROS_PLAN",
+        "genre": "Suspense",
+        "content": ["ALLIE"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "ALLIE", "points": 1}
+        ]
+      },
+      {
+        "plan_id": "29B",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Suspense",
+        "content": ["OBJET", "ALLIE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ARME", "points": 2},
+          {"type": "DROITE", "attribute": "VIDE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 30,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "30A",
+        "frame_type": "GROS_PLAN",
+        "genre": "Suspense",
+        "content": ["PLAN_SUSPENSE"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "PLAN_SUSPENSE", "points": 1}
+        ]
+      },
+      {
+        "plan_id": "30B",
+        "frame_type": "PLAN_MOYEN",
+        "genre": "Suspense",
+        "content": ["ARME", "HEROINE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ARME", "points": 2},
+          {"type": "DROITE", "attribute": "HEROINE", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 31,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "31A",
+        "frame_type": "GROS_PLAN",
+        "genre": null,
+        "content": ["OBJET"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "OBJET", "points": 1}
+        ]
+      },
+      {
+        "plan_id": "31B",
+        "frame_type": "PLAN_MOYEN",
+        "genre": null,
+        "content": ["OBJET", "ARME"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "OBJET", "points": 2},
+          {"type": "DROITE", "attribute": "ARME", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 32,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "32A",
+        "frame_type": "GROS_PLAN",
+        "genre": null,
+        "content": ["ALLIE"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "GROS_PLAN", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "32B",
+        "frame_type": "PLAN_MOYEN",
+        "genre": null,
+        "content": ["ALLIE", "OBJET"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ALLIE", "points": 2},
+          {"type": "DROITE", "attribute": "OBJET", "points": 2}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 33,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "33A",
+        "frame_type": "PLAN_MOYEN",
+        "genre": null,
+        "content": ["VOITURE", "HEROINE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "VOITURE", "points": 2},
+          {"type": "DROITE", "attribute": "HEROINE", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "33B",
+        "frame_type": "GROS_PLAN",
+        "genre": "Suspense",
+        "content": ["PLAN_SUSPENSE"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "PLAN_SUSPENSE", "points": 1}
+        ]
+      }
+    ]
+  },
+  {
+    "card_id": 34,
+    "physical_type": "COMBO",
+    "plans": [
+      {
+        "plan_id": "34A",
+        "frame_type": "PLAN_MOYEN",
+        "genre": null,
+        "content": ["ENNEMI", "VOITURE"],
+        "scoring": [
+          {"type": "GAUCHE", "attribute": "ENNEMI", "points": 2},
+          {"type": "DROITE", "attribute": "VIDE", "points": 2}
+        ]
+      },
+      {
+        "plan_id": "34B",
+        "frame_type": "GROS_PLAN",
+        "genre": null,
+        "content": ["VIDE"],
+        "scoring": [
+          {"type": "COUNT_ALL", "attribute": "VIDE", "points": 3}
+        ]
+      }
+    ]
+  }
+]
