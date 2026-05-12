@@ -41,19 +41,51 @@ def plan_label(plan: Plan) -> str:
 
 # ── Placement helpers ─────────────────────────────────────────────────────────
 
+def _make_vide_plan(card_id: int) -> Plan:
+    """Whole-card face-down placeholder (VIDE). No scoring."""
+    return Plan(
+        plan_id=f"{card_id}_NOIR",
+        frame_type="VIDE",
+        genre=None,
+        content=["VIDE"],
+        scoring=[],
+        face_down=True,
+    )
+
+
 def _make_placement_options(card: PhysicalCard) -> list[list[Plan]]:
+    """
+    Valid placements for a physical card:
+
+    PLAN LARGE:
+      - [plan]  — face visible (1 plan)
+      - [VIDE]  — carte retournée face noire (0 plan visible)
+
+    COMBO (GROS PLAN + PLAN MOYEN):
+      - [A, B]  — les 2 plans visibles côte à côte
+      - [B, A]  — idem, sens inverse
+      - [A]     — seul A visible, B recouvert par une carte adjacente
+      - [B]     — seul B visible, A recouvert par une carte adjacente
+      - [VIDE]  — toute la carte retournée face noire
+
+    NB: on ne peut PAS avoir un demi-VIDE + un plan visible sur la même carte
+    physique — retourner face noire concerne TOUTE la carte.
+    """
+    vide = _make_vide_plan(card.card_id)
+
     if card.physical_type == "PLAN_LARGE":
-        return [list(card.plans)]
+        return [
+            [card.plans[0]],  # face visible
+            [vide],           # face cachée
+        ]
+
     a, b = card.plans[0], card.plans[1]
-    b_down = copy.copy(b); b_down.face_down = True
-    a_down = copy.copy(a); a_down.face_down = True
     return [
-        [a, b],
-        [b, a],
-        [a, b_down],
-        [b, a_down],
-        [a_down, b],
-        [b_down, a],
+        [a, b],   # 2 plans visibles, A à gauche
+        [b, a],   # 2 plans visibles, B à gauche
+        [a],      # seul A visible (B recouvert)
+        [b],      # seul B visible (A recouvert)
+        [vide],   # carte entière face cachée
     ]
 
 
@@ -61,12 +93,10 @@ def _visible_count(option: list[Plan]) -> int:
     return sum(1 for p in option if not p.face_down)
 
 
-def _valid_options(card: PhysicalCard, current_visible: int, remaining_count: int) -> list[list[Plan]]:
-    """Filter placement options respecting MAX_VISIBLE_PLANS."""
-    # After placing this card, remaining_count-1 cards still need at least 1 plan each
-    max_for_this = MAX_VISIBLE_PLANS - current_visible - (remaining_count - 1)
-    max_for_this = max(1, max_for_this)  # must show at least 1
-    return [opt for opt in _make_placement_options(card) if 1 <= _visible_count(opt) <= max_for_this]
+def _valid_options(card: PhysicalCard, current_visible: int) -> list[list[Plan]]:
+    """Filter options so total visible plans in banc stays ≤ MAX_VISIBLE_PLANS."""
+    budget = MAX_VISIBLE_PLANS - current_visible
+    return [opt for opt in _make_placement_options(card) if _visible_count(opt) <= budget]
 
 
 def _greedy_place(hand: list[PhysicalCard]) -> tuple[BancDeMontage, list[dict]]:
@@ -83,7 +113,7 @@ def _greedy_place(hand: list[PhysicalCard]) -> tuple[BancDeMontage, list[dict]]:
         best_score = -1
 
         for card in remaining:
-            for option in _valid_options(card, current_visible, len(remaining)):
+            for option in _valid_options(card, current_visible):
                 trial = BancDeMontage(placed_cards=banc.placed_cards + [PlacedCard(card, option)])
                 s = score_banc(trial)["total"]
                 if s > best_score:
@@ -114,7 +144,7 @@ def _random_place(hand: list[PhysicalCard]) -> tuple[BancDeMontage, list[dict]]:
 
     for card in shuffled:
         current_visible = len([p for p in banc.visible_plans if not p.face_down])
-        options = _valid_options(card, current_visible, len(shuffled) - len(placement_log))
+        options = _valid_options(card, current_visible)
         chosen = random.choice(options)
         banc.placed_cards.append(PlacedCard(card, chosen))
 
