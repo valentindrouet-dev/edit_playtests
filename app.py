@@ -93,7 +93,7 @@ with tab2:
             random.shuffle(all_cards)
             hand = all_cards[:9]
             from engine.simulator import _random_place
-            banc = _random_place(hand)
+            banc, _ = _random_place(hand)
             result = score_banc(banc)
             for entry in result["per_plan"]:
                 plan_scores[entry["plan_id"]].append(entry["points"])
@@ -145,7 +145,7 @@ with tab3:
             random.shuffle(all_cards)
             hand = all_cards[:9]
             from engine.simulator import _random_place
-            banc = _random_place(hand)
+            banc, _ = _random_place(hand)
             for intent in all_intentions:
                 if evaluate_intention(intent, banc):
                     success_counts[intent.card_id] += 1
