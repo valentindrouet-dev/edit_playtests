@@ -1,12 +1,12 @@
 """
 Game simulator for EDIT.
 
-Phase A: 4 rounds of drafting into chutiers (2 cards drawn per player per round,
-         1 placed left, 1 placed right). Each chutier starts with 1 Plan Large seed.
-         Direction card at bottom of deck determines which chutier each player keeps.
-Phase C: Each player picks 3 intention cards (1 per type) from visible piles.
-Phase D: Greedy or random placement respecting MAX_VISIBLE_PLANS = 10.
-Phase E: Scoring of plans + intentions.
+Phase A — Dérushage : 4 drafting rounds into shared chutiers. Each chutier seeded
+          with 1 Plan Large. Direction card determines which chutier each player keeps.
+Phase B — Tri + Intentions : player sorts hand face-down, picks 1 intention card
+          every 3 cards placed (at milestones 3, 6, 9). Shared intentions revealed.
+Phase C — Montage : greedy or random placement, respecting MAX_VISIBLE_PLANS = 10.
+Phase D — Visionnage : scoring of plans + intentions.
 """
 from __future__ import annotations
 import random
@@ -206,13 +206,49 @@ def _simulate_phase_a(all_cards: list[PhysicalCard], n_players: int) -> dict:
     }
 
 
-# ── Phase C ───────────────────────────────────────────────────────────────────
+# ── Phase B ───────────────────────────────────────────────────────────────────
 
-def _simulate_phase_c(all_intentions: list[IntentionCard], n_players: int) -> dict:
+def _pick_intention(
+    piles: dict[str, list[IntentionCard]],
+    visible: dict[str, IntentionCard | None],
+    used: set[int],
+    player_num: int,
+    already_picked: list[IntentionCard],
+) -> tuple[IntentionCard, str, str]:
+    """Pick one intention card for a player (helper for Phase B)."""
+    needed = [t for t in INTENTION_TYPES if not any(c.type == t for c in already_picked)]
+    chosen_type = random.choice(needed)
+
+    # 50% visible, 50% blind draw
+    if (random.random() < 0.5
+            and visible[chosen_type]
+            and visible[chosen_type].card_id not in used):
+        chosen = visible[chosen_type]
+        method = "visible"
+    else:
+        candidates = [c for c in piles[chosen_type] if c.card_id not in used]
+        chosen = random.choice(candidates[:3]) if candidates else visible[chosen_type]
+        method = "pioche aveugle"
+
+    used.add(chosen.card_id)
+    remaining = [c for c in piles[chosen_type] if c.card_id not in used]
+    visible[chosen_type] = remaining[0] if remaining else None
+
+    return chosen, method, chosen_type
+
+
+def _simulate_phase_b(
+    all_intentions: list[IntentionCard],
+    player_hands: dict[int, list[PhysicalCard]],
+    n_players: int,
+) -> dict:
     """
-    Each player picks 3 intention cards (1 per type) in turn order.
-    Simplification: always takes the first visible card of a random type,
-    simulating the blind-draw-and-choose mechanic.
+    Phase B — Tri + Intentions.
+
+    Each player places their 9 cards face-down one by one (simulated as a random
+    ordering). After every 3 cards placed, the player picks 1 intention card.
+    Milestone triggers: after card 3 → intention 1, card 6 → intention 2, card 9 → intention 3.
+    Players pick in turn order (player who hits milestone first picks first).
     """
     piles: dict[str, list[IntentionCard]] = {
         t: [c for c in all_intentions if c.type == t]
@@ -221,64 +257,67 @@ def _simulate_phase_c(all_intentions: list[IntentionCard], n_players: int) -> di
     for pile in piles.values():
         random.shuffle(pile)
 
-    # Visible top card per pile
-    visible: dict[str, IntentionCard | None] = {t: piles[t][0] if piles[t] else None for t in INTENTION_TYPES}
+    visible: dict[str, IntentionCard | None] = {
+        t: piles[t][0] if piles[t] else None for t in INTENTION_TYPES
+    }
     used: set[int] = set()
-    selection_log = []
 
-    player_intentions: dict[int, list[IntentionCard]] = {p: [] for p in range(1, n_players + 1)}
+    # For each player: shuffled card order (the "tri") + milestones at 3, 6, 9
+    player_card_order: dict[int, list[PhysicalCard]] = {}
+    for idx, hand in player_hands.items():
+        shuffled = list(hand)
+        random.shuffle(shuffled)
+        player_card_order[idx] = shuffled
 
-    # Players alternate picking 1 card at a time until each has 3
-    turn = 0
-    while any(len(v) < 3 for v in player_intentions.values()):
-        player_num = (turn % n_players) + 1
-        personal = player_intentions[player_num]
+    player_intentions: dict[int, list[IntentionCard]] = {p + 1: [] for p in range(n_players)}
+    tri_log: list[dict] = []  # chronological log of all events
 
-        # Find a type this player still needs
-        needed = [t for t in INTENTION_TYPES if not any(c.type == t for c in personal)]
-        if not needed:
-            turn += 1
-            continue
+    # Simulate step by step (step = one card placed face-down by any player)
+    # At milestones 3, 6, 9 a player picks an intention.
+    # We process milestone pickings in player order when they occur simultaneously.
+    cards_placed = {p + 1: 0 for p in range(n_players)}
+    MILESTONES = {3, 6, 9}
 
-        chosen_type = random.choice(needed)
+    for step in range(1, 10):  # steps 1–9 (cards placed per player)
+        # All players place card #step simultaneously
+        for player_idx in range(n_players):
+            player_num = player_idx + 1
+            card = player_card_order[player_idx][step - 1]
+            cards_placed[player_num] += 1
+            tri_log.append({
+                "event": "carte",
+                "player": player_num,
+                "n_placed": cards_placed[player_num],
+                "card": card_label(card),
+            })
 
-        # 50% chance: take visible, 50%: blind draw
-        if random.random() < 0.5 and visible[chosen_type] and visible[chosen_type].card_id not in used:
-            chosen = visible[chosen_type]
-            method = "visible"
-        else:
-            candidates = [c for c in piles[chosen_type] if c.card_id not in used]
-            if not candidates:
-                turn += 1
-                continue
-            chosen = random.choice(candidates[:3])   # simulate blind draw of up to 3
-            method = "blind"
+        # Check milestone: if step is a milestone, each player picks an intention
+        if step in MILESTONES:
+            for player_idx in range(n_players):
+                player_num = player_idx + 1
+                chosen, method, itype = _pick_intention(
+                    piles, visible, used, player_num, player_intentions[player_num]
+                )
+                player_intentions[player_num].append(chosen)
+                tri_log.append({
+                    "event": "intention",
+                    "player": player_num,
+                    "milestone": step,
+                    "method": method,
+                    "type": itype,
+                    "chosen": f"#{chosen.card_id} {chosen.title} ({chosen.type}, {chosen.points}pts)",
+                })
 
-        used.add(chosen.card_id)
-        personal.append(chosen)
-
-        # Advance visible for that type
-        remaining_pile = [c for c in piles[chosen_type] if c.card_id not in used]
-        visible[chosen_type] = remaining_pile[0] if remaining_pile else None
-
-        selection_log.append({
-            "turn": turn + 1,
-            "player": player_num,
-            "method": method,
-            "chosen": f"#{chosen.card_id} {chosen.title} ({chosen.type}, {chosen.points}pts)",
-        })
-        turn += 1
-
-    # 3 shared intentions (1 per type, from remaining visible)
+    # 3 shared intentions (1 per type, first available)
     shared: list[IntentionCard] = []
     for t in INTENTION_TYPES:
-        remaining_pile = [c for c in piles[t] if c.card_id not in used]
-        if remaining_pile:
-            shared.append(remaining_pile[0])
-            used.add(remaining_pile[0].card_id)
+        remaining = [c for c in piles[t] if c.card_id not in used]
+        if remaining:
+            shared.append(remaining[0])
+            used.add(remaining[0].card_id)
 
     return {
-        "selection_log": selection_log,
+        "tri_log": tri_log,
         "player_intentions": {
             p: [f"#{c.card_id} {c.title} ({c.points}pts)" for c in cards]
             for p, cards in player_intentions.items()
@@ -302,15 +341,19 @@ def simulate_game_detailed(
     all_cards = load_plan_cards()
     all_intentions = load_intention_cards()
 
+    # Phase A — Dérushage
     phase_a = _simulate_phase_a(all_cards, n_players)
-    phase_c = _simulate_phase_c(all_intentions, n_players)
-
     player_hands = phase_a["_hands_raw"]
-    player_intentions_raw = phase_c["_player_intentions_raw"]
-    shared_raw = phase_c["_shared_raw"]
 
+    # Phase B — Tri + Intentions
+    phase_b = _simulate_phase_b(all_intentions, player_hands, n_players)
+    player_intentions_raw = phase_b["_player_intentions_raw"]
+    shared_raw = phase_b["_shared_raw"]
+
+    # Phase C — Montage
+    phase_c_players = []
+    # Phase D — Visionnage
     phase_d_players = []
-    phase_e_players = []
 
     for player_idx in range(n_players):
         hand = player_hands[player_idx]
@@ -325,13 +368,13 @@ def simulate_game_detailed(
         intention_score = score_intentions(personal, shared_raw, banc)
         total = plan_score["total"] + intention_score["total"]
 
-        phase_d_players.append({
+        phase_c_players.append({
             "player": player_idx + 1,
             "placement_log": placement_log,
             "n_visible": len([p for p in banc.visible_plans if not p.face_down]),
         })
 
-        phase_e_players.append({
+        phase_d_players.append({
             "player": player_idx + 1,
             "plan_score": plan_score,
             "intention_score": intention_score,
@@ -343,9 +386,9 @@ def simulate_game_detailed(
         "n_players": n_players,
         "strategy": strategy,
         "phase_a": phase_a,
-        "phase_c": phase_c,
+        "phase_b": phase_b,
+        "phase_c": {"players": phase_c_players},
         "phase_d": {"players": phase_d_players},
-        "phase_e": {"players": phase_e_players},
     }
 
 
@@ -365,11 +408,11 @@ def simulate_game(
             "plan_score": r["plan_score"],
             "intention_score": r["intention_score"],
             "total": r["total"],
-            "n_visible_plans": r["plan_score"]["total"],
-            "personal_intentions": log["phase_c"]["_player_intentions_raw"][r["player"]],
-            "shared_intentions": log["phase_c"]["_shared_raw"],
+            "n_visible_plans": log["phase_c"]["players"][r["player"] - 1]["n_visible"],
+            "personal_intentions": log["phase_b"]["_player_intentions_raw"][r["player"]],
+            "shared_intentions": log["phase_b"]["_shared_raw"],
         }
-        for r in log["phase_e"]["players"]
+        for r in log["phase_d"]["players"]
     ]
 
 
@@ -381,7 +424,7 @@ def run_simulation(
     records = []
     for game_idx in range(n_games):
         log = simulate_game_detailed(n_players=n_players, strategy=strategy)
-        for r in log["phase_e"]["players"]:
+        for r in log["phase_d"]["players"]:
             records.append({
                 "game": game_idx,
                 "player": r["player"],
@@ -389,7 +432,7 @@ def run_simulation(
                 "total": r["total"],
                 "plan_total": r["plan_score"]["total"],
                 "intention_total": r["intention_score"]["total"],
-                "n_visible_plans": log["phase_d"]["players"][r["player"] - 1]["n_visible"],
+                "n_visible_plans": log["phase_c"]["players"][r["player"] - 1]["n_visible"],
                 "intentions_succeeded": sum(
                     1 for it in r["intention_score"]["intentions"] if it["success"]
                 ),

@@ -262,49 +262,56 @@ with tab4:
                 for c in pa["player_hands"][p]:
                     st.markdown(f"- `{c}`")
 
-        # ── PHASE C ──────────────────────────────────────────────────────────
+        # ── PHASE B ──────────────────────────────────────────────────────────
         st.markdown("---")
-        st.markdown("## 🎯 Phase C — Choix des Intentions de Montage")
+        st.markdown("## 🗂️ Phase B — Tri & Intentions de Montage")
+        st.caption("Chaque joueuse trie ses 9 cartes face cachée. Après chaque palier de 3 cartes posées, elle choisit une Intention.")
 
-        pc = log["phase_c"]
+        pb = log["phase_b"]
 
-        with st.expander("Séquence de sélection", expanded=True):
-            sel_rows = []
-            for sel in pc["selection_log"]:
-                sel_rows.append({
-                    "Tour": sel["turn"],
-                    "Joueuse": f"J{sel['player']}",
-                    "Méthode": "Visible" if sel["method"] == "visible" else "Pioche aveugle",
-                    "Intention choisie": sel["chosen"],
-                })
-            if sel_rows:
-                st.dataframe(pd.DataFrame(sel_rows), use_container_width=True)
+        with st.expander("Journal du Tri (toutes joueuses)", expanded=True):
+            tri_rows = []
+            for event in pb["tri_log"]:
+                if event["event"] == "carte":
+                    tri_rows.append({
+                        "Joueuse": f"J{event['player']}",
+                        "Événement": f"Pose carte {event['n_placed']}/9",
+                        "Détail": event["card"],
+                    })
+                else:
+                    tri_rows.append({
+                        "Joueuse": f"J{event['player']}",
+                        "Événement": f"🎯 Choix intention (palier {event['milestone']})",
+                        "Détail": f"[{event['method']}] {event['chosen']}",
+                    })
+            if tri_rows:
+                st.dataframe(pd.DataFrame(tri_rows), use_container_width=True)
 
         st.markdown("**Intentions personnelles :**")
         intent_cols = st.columns(n)
         for p in range(1, n + 1):
             with intent_cols[p - 1]:
                 st.markdown(f"**Joueuse {p}**")
-                for c in pc["player_intentions"][p]:
+                for c in pb["player_intentions"][p]:
                     st.markdown(f"- {c}")
 
         st.markdown("**Intentions communes (accessibles à toutes) :**")
-        for c in pc["shared_intentions"]:
+        for c in pb["shared_intentions"]:
             st.markdown(f"- {c}")
 
-        # ── PHASE D ──────────────────────────────────────────────────────────
+        # ── PHASE C ──────────────────────────────────────────────────────────
         st.markdown("---")
-        st.markdown("## 🎬 Phase D — Montage")
-        st.caption(f"Règle : maximum {10} plans visibles par banc de montage.")
+        st.markdown("## 🎬 Phase C — Montage")
+        st.caption(f"Règle : maximum 10 plans visibles par banc de montage.")
 
-        for pd_player in log["phase_d"]["players"]:
-            p = pd_player["player"]
+        for pc_player in log["phase_c"]["players"]:
+            p = pc_player["player"]
             with st.expander(
-                f"Joueuse {p} — {pd_player['n_visible']} plans visibles",
+                f"Joueuse {p} — {pc_player['n_visible']} plans visibles",
                 expanded=True,
             ):
                 step_rows = []
-                for step in pd_player["placement_log"]:
+                for step in pc_player["placement_log"]:
                     step_rows.append({
                         "Étape": step["step"],
                         "Carte posée": step["card_label"],
@@ -317,8 +324,8 @@ with tab4:
                 # Visual timeline
                 st.markdown("**Timeline finale :**")
                 timeline_html = '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">'
-                pe_player = next(r for r in log["phase_e"]["players"] if r["player"] == p)
-                for entry in pe_player["plan_score"]["per_plan"]:
+                pd_player = next(r for r in log["phase_d"]["players"] if r["player"] == p)
+                for entry in pd_player["plan_score"]["per_plan"]:
                     genre_bg = {
                         "Action": "#7B1D1D", "Policier": "#1A2744",
                         "Suspense": "#2E1A47", None: "#222"
@@ -342,13 +349,13 @@ with tab4:
                 timeline_html += "</div>"
                 st.markdown(timeline_html, unsafe_allow_html=True)
 
-        # ── PHASE E ──────────────────────────────────────────────────────────
+        # ── PHASE D ──────────────────────────────────────────────────────────
         st.markdown("---")
-        st.markdown("## 🏆 Phase E — Visionnage & Scores")
+        st.markdown("## 🏆 Phase D — Visionnage & Scores")
 
         # Score summary table
         summary_rows = []
-        for r in log["phase_e"]["players"]:
+        for r in log["phase_d"]["players"]:
             summary_rows.append({
                 "Joueuse": f"J{r['player']}",
                 "Points Plans": r["plan_score"]["total"],
@@ -356,11 +363,10 @@ with tab4:
                 "TOTAL": r["total"],
             })
         summary_df = pd.DataFrame(summary_rows)
-        winner_idx = summary_df["TOTAL"].idxmax()
         st.dataframe(summary_df.style.highlight_max(subset=["TOTAL"], color="#2d6a2d"),
                      use_container_width=True)
 
-        for r in log["phase_e"]["players"]:
+        for r in log["phase_d"]["players"]:
             with st.expander(f"Joueuse {r['player']} — détail du scoring", expanded=False):
                 col1, col2, col3 = st.columns(3)
                 col1.metric("Plans", r["plan_score"]["total"])
